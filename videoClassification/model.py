@@ -115,6 +115,6 @@ def generate_model(opt):
 
     if not opt.no_cuda:
         model = model.cuda()
-        model = nn.DataParallel(model, device_ids=None)
+    model = nn.DataParallel(model, device_ids=None)
 
     return model

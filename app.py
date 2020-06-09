@@ -11,7 +11,6 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 publicDirectory = os.path.join(BASE_DIR, "public")
 if not os.path.exists(publicDirectory):
@@ -21,11 +20,17 @@ app = Flask(__name__,static_url_path="")
 config = Configuration()
 model = None
 
+NCLUSTERS_KMEANS=3
 
+#Se carga el modelo
 model = generate_model(config)
 print('loading model {}'.format(config.model))
 config.model = './resnext-101-kinetics.pth'
-model_data = torch.load(config.model)
+if config.no_cuda:
+    model_data = torch.load(config.model, map_location=torch.device('cpu'))
+else:
+    model_data = torch.load(config.model)
+
 assert config.arch == model_data['arch']
 model.load_state_dict(model_data['state_dict'])
 model.eval()
@@ -48,7 +53,7 @@ def transformDf(row):
 def clustering_(dfFinal):
     descriptor_array = dfFinal.descriptor.apply(lambda x: np.array(x)).to_numpy()
     descriptor_array = np.vstack(descriptor_array).astype(np.float32)
-    clustering = KMeans(n_clusters=3, n_jobs=-1).fit(descriptor_array)
+    clustering = KMeans(n_clusters=NCLUSTERS_KMEANS, n_jobs=-1).fit(descriptor_array)
     dfFinal['labels'] = clustering.predict(descriptor_array)
     return descriptor_array, clustering
 
@@ -123,5 +128,5 @@ def splitVideo():
 
             return jsonify(get_name_frame_files(array_segmen))
 
-if __name__ == '__main__':
-    app.run(port=6008)
+#if __name__ == '__main__':
+app.run(port=6008)
